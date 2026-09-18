@@ -18,7 +18,7 @@ src/
 ├── app/
 │   ├── layout.tsx      # Fonts, metadata, OpenGraph
 │   ├── page.tsx        # Section composition + JSON-LD Person schema
-│   ├── resume/         # Printable A4 resume at /resume
+│   ├── resume/         # Printable A4 resume at /resume, builder at /resume/build
 │   ├── globals.css     # Theme tokens, dark ground, motion, print rules
 │   └── icon.svg        # LD monogram favicon
 ├── components/
@@ -47,6 +47,26 @@ The **Recent activity** section is a server component that calls the GitHub publ
 the resume and the portfolio can never disagree. The page is styled to print:
 `@page` sets A4 with margins, the site chrome is `print:hidden`, and entries carry
 `break-inside: avoid` so no role is split across pages.
+
+`/resume/build` is a builder that renders the same sheet from whatever you type
+into it, so anyone can produce a resume on this template. The form keeps its draft
+in `localStorage` only — nothing is uploaded — and it is loaded with `ssr: false`,
+since a saved draft and a photo picked through `FileReader` exist only in the
+browser. Printing it hides the form and prints the sheet alone.
+
+Both pages render `src/components/resume/ResumeSheet.tsx`, which takes a
+`ResumeContent` (see `src/lib/resume-content.ts`); `ownerContent` maps
+`src/data/resume.ts` onto that shape. One template, two sources of data.
+
+### Printing
+
+Two details matter and are easy to undo by accident:
+
+- `@page` carries **vertical** margins only. The side gap is padding on the sheet,
+  because picking "None" for margins in the print dialog zeroes `@page` and would
+  otherwise clip the first character of every line.
+- Bullets are real `list-disc` markers. A dot drawn as a span with a background
+  colour disappears unless the visitor happens to tick "Background graphics".
 
 `public/louie-doromal-resume.pdf` is the file behind the **Download PDF** button. It
 is committed because Vercel's build has no browser to render it. After editing

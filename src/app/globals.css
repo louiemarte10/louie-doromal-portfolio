@@ -76,7 +76,10 @@ body {
 @media print {
   @page {
     size: A4;
-    margin: 13mm 14mm;
+    /* Vertical only. The side gap is padding on the sheet instead, because
+       choosing "None" for margins in the print dialog zeroes @page and would
+       otherwise clip the first character of every line. */
+    margin: 12mm 0;
   }
 
   html,
@@ -88,12 +91,15 @@ body {
     scroll-behavior: auto;
   }
 
-  /* Page margins come from @page so every page gets them, not just the first. */
   .resume-sheet {
     max-width: none;
-    padding: 0;
+    /* Horizontal padding is re-applied on each printed page, while vertical
+       padding would only land on the first and last — hence @page above. */
+    padding: 0 14mm;
     border-radius: 0;
     box-shadow: none;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
   .avoid-break {
