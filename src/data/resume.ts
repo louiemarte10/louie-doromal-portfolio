@@ -165,7 +165,10 @@ export type Project = {
   blurb: string;
   points: string[];
   stack: string[];
+  /** Repository URL, when the code is public. */
   href?: string;
+  /** Deployed URL — the card links here in preference to the repository. */
+  live?: string;
   featured?: boolean;
 };
 
@@ -209,6 +212,7 @@ export const projects: Project[] = [
     ],
     stack: ["Vue 3", "Tailwind CSS", "Vite", "Vercel"],
     href: "https://github.com/louiemarte10/louie-agent-dashboard",
+    live: "https://louie-agent-dashboard.vercel.app",
     featured: true,
   },
   {
@@ -244,6 +248,7 @@ export const projects: Project[] = [
     ],
     stack: ["Next.js", "TypeScript", "Claude", "Groq Whisper", "ElevenLabs"],
     href: "https://github.com/louiemarte10/revieweer",
+    live: "https://revieweer.vercel.app",
   },
 ];
 
