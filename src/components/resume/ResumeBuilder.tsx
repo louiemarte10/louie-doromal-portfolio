@@ -7,6 +7,7 @@ import {
   blankContent,
   fromLines,
   fromList,
+  normalizeContent,
   ownerContent,
   type ResumeContent,
 } from "@/lib/resume-content";
@@ -30,8 +31,10 @@ function loadDraft(): ResumeContent | null {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<ResumeContent>;
-    return { ...blankContent, ...parsed };
+    // Normalised, not spread: a draft written by older code is missing whatever
+    // fields have been added since, and a top-level spread would leave those
+    // undefined inside each row.
+    return normalizeContent(JSON.parse(raw));
   } catch {
     return null;
   }

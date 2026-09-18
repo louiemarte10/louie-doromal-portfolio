@@ -8,8 +8,21 @@ import {
   type Template,
 } from "@/lib/resume-templates";
 
-function hasText(...values: string[]) {
-  return values.some((value) => value.trim().length > 0);
+/**
+ * Tolerates undefined on purpose. The sheet renders drafts restored from a
+ * visitor's own storage, which can predate any field added since it was saved,
+ * and a missing field must not take the whole page down.
+ */
+function hasText(...values: (string | null | undefined)[]) {
+  return values.some((value) => typeof value === "string" && value.trim().length > 0);
+}
+
+/** Drops blanks, and anything that is not a string at all. */
+function filled(values: (string | null | undefined)[] | null | undefined) {
+  if (!Array.isArray(values)) return [];
+  return values.filter(
+    (value): value is string => typeof value === "string" && value.trim().length > 0,
+  );
 }
 
 function Block({
@@ -54,16 +67,20 @@ export function ResumeSheet({
 }) {
   const t = template;
 
-  const links = content.links.filter((link) => link.trim().length > 0);
-  const paragraphs = content.profile.filter((entry) => entry.trim().length > 0);
-  const skills = content.skills.filter(
-    (group) => hasText(group.title) || group.items.length > 0,
+  const links = filled(content.links);
+  const paragraphs = filled(content.profile);
+  const list = <T,>(value: T[] | null | undefined) => (Array.isArray(value) ? value : []);
+
+  const skills = list(content.skills).filter(
+    (group) => hasText(group.title) || filled(group.items).length > 0,
   );
-  const roles = content.experience.filter((role) => hasText(role.title, role.company));
-  const works = content.projects.filter((project) => hasText(project.name));
-  const schools = content.education.filter((entry) => hasText(entry.degree, entry.school));
-  const honours = content.awards.filter((award) => hasText(award.title));
-  const referees = content.references.filter((person) => hasText(person.name));
+  const roles = list(content.experience).filter((role) => hasText(role.title, role.company));
+  const works = list(content.projects).filter((project) => hasText(project.name));
+  const schools = list(content.education).filter((entry) =>
+    hasText(entry.degree, entry.school),
+  );
+  const honours = list(content.awards).filter((award) => hasText(award.title));
+  const referees = list(content.references).filter((person) => hasText(person.name));
 
   const photo = content.photo ? (
     content.photo.startsWith("data:") ? (
@@ -168,7 +185,7 @@ export function ResumeSheet({
             <div key={group.title} className="avoid-break">
               <dt className={`font-semibold ${t.body}`}>{group.title}</dt>
               <dd className={`mt-0.5 leading-[1.45] text-paper-soft ${t.small}`}>
-                {group.items.join(" · ")}
+                {filled(group.items).join(" · ")}
               </dd>
             </div>
           ))}
@@ -201,10 +218,10 @@ export function ResumeSheet({
                   {role.summary}
                 </p>
               ) : null}
-              <Points items={role.points} t={t} />
-              {role.tags.length > 0 ? (
+              <Points items={filled(role.points)} t={t} />
+              {filled(role.tags).length > 0 ? (
                 <p className="mt-1.5 font-mono text-[9.5px] text-paper-soft">
-                  {role.tags.join(" · ")}
+                  {filled(role.tags).join(" · ")}
                 </p>
               ) : null}
             </div>
@@ -242,9 +259,9 @@ export function ResumeSheet({
                   {project.blurb}
                 </p>
               ) : null}
-              {project.stack.length > 0 ? (
+              {filled(project.stack).length > 0 ? (
                 <p className="mt-0.5 font-mono text-[9.5px] text-paper-soft">
-                  {project.stack.join(" · ")}
+                  {filled(project.stack).join(" · ")}
                 </p>
               ) : null}
             </div>

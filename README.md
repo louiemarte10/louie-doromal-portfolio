@@ -191,6 +191,15 @@ covers a transient fault; a stale chunk needs the document fetched again, so a
 reload is offered separately, and the link home is a plain anchor on purpose —
 `next/link` would route through the same broken runtime.
 
+A saved draft outlives the code that wrote it, so `normalizeContent()` rebuilds
+one field by field instead of spreading it over the defaults. A top-level spread
+only merges the top level: when `context` was added to projects, every draft
+saved before that arrived with it missing, and the sheet died on
+`undefined.trim()` for anyone holding one — a crash that survived reloading,
+because the draft was reloaded too. The sheet tolerates missing fields as a
+second layer, since it renders data from a visitor's own storage and one absent
+field must not take the page down.
+
 My own resume carries no character references: those are given on request, not
 published on a page anyone can read. The builder still offers the section, since
 whoever is filling it in decides what goes on their own copy.

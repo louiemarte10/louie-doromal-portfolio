@@ -135,3 +135,75 @@ export function fromList(value: string) {
     .map((item) => item.trim())
     .filter(Boolean);
 }
+
+const text = (value: unknown) => (typeof value === "string" ? value : "");
+
+const textList = (value: unknown) =>
+  Array.isArray(value) ? value.map(text).filter((entry) => entry.length > 0) : [];
+
+function rows<T>(value: unknown, shape: (row: Record<string, unknown>) => T): T[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((row) =>
+    shape(row && typeof row === "object" ? (row as Record<string, unknown>) : {}),
+  );
+}
+
+/**
+ * Rebuilds a full `ResumeContent` from whatever shape a stored draft happens to
+ * be in, filling every field with a string rather than leaving it undefined.
+ *
+ * This exists because a draft outlives the code that wrote it. Spreading a saved
+ * object over the defaults only merges the top level, so when a field was added
+ * to projects, drafts saved before that arrived with it missing, and the sheet
+ * crashed on `undefined.trim()` for every visitor holding one — a crash that
+ * survived reloading, since the draft was reloaded too.
+ */
+export function normalizeContent(input: unknown): ResumeContent {
+  const raw = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
+
+  return {
+    name: text(raw.name),
+    role: text(raw.role),
+    location: text(raw.location),
+    email: text(raw.email),
+    phone: text(raw.phone),
+    links: textList(raw.links),
+    photo: typeof raw.photo === "string" ? raw.photo : null,
+    profile: textList(raw.profile),
+    skills: rows(raw.skills, (row) => ({
+      title: text(row.title),
+      items: textList(row.items),
+    })),
+    experience: rows(raw.experience, (row) => ({
+      title: text(row.title),
+      company: text(row.company),
+      period: text(row.period),
+      summary: text(row.summary),
+      points: textList(row.points),
+      tags: textList(row.tags),
+    })),
+    projects: rows(raw.projects, (row) => ({
+      name: text(row.name),
+      context: text(row.context),
+      url: text(row.url),
+      blurb: text(row.blurb),
+      stack: textList(row.stack),
+    })),
+    education: rows(raw.education, (row) => ({
+      degree: text(row.degree),
+      school: text(row.school),
+      period: text(row.period),
+    })),
+    awards: rows(raw.awards, (row) => ({
+      title: text(row.title),
+      issuer: text(row.issuer),
+      date: text(row.date),
+    })),
+    references: rows(raw.references, (row) => ({
+      name: text(row.name),
+      title: text(row.title),
+      phone: text(row.phone),
+    })),
+    certification: text(raw.certification),
+  };
+}
