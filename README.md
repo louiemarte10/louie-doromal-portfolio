@@ -118,13 +118,22 @@ The control is a small player: play or pause, a clock and a progress bar.
 Progress comes from the utterance's real word-boundary events, falling back to
 the elapsed clock where a browser does not send them.
 
-The total is shown with a `~` because synthesised speech has no knowable
-duration: the pace is whatever voice the listener happens to have. An opening
-guess comes from the word count at 150 words a minute, then once there is enough
-progress to divide by, the total is re-derived as `elapsed / progress`. That
-correction is what stops the clock running past the end — dividing by a capped
-progress can never yield a total below the time already elapsed. A recording
-skips all of this and reports its own duration exactly.
+**No total is shown for synthesised speech**, and that is deliberate. Its
+duration is not knowable in advance — the pace is whatever voice the listener
+happens to have — so any total is a guess that visibly disagrees with the bar as
+it plays. A guess was shown at one point and it was worse than nothing. Only a
+recording, which reports its own duration, gets a total.
+
+The bar glides rather than stepping: the clock ticks four times a second and the
+fill carries a matching transition, because word-boundary events arrive in jumps
+and a bar that lurches while the clock ticks evenly looks broken. Where no
+boundary events arrive the clock drives the bar instead, capped just below the
+end so it cannot sit full while the narration is still going.
+
+It is drawn as a div with an invisible `input[type=range]` laid over it, rather
+than styling the input's own track: dragging, keyboard arrows and the slider
+semantics still come from the platform, but the visible fill is a div that can
+actually be animated — a gradient stop on a native track cannot be.
 
 The bar is a real scrubber: click or drag it to jump. A recording is seeked
 outright; synthesised speech cannot be, so the equivalent **character** offset is

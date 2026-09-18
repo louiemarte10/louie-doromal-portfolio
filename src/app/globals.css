@@ -123,76 +123,29 @@ body {
 }
 
 /**
- * The intro scrubber. A range input styled down to a player timeline, rather
- * than a div with click maths, so dragging, keyboard arrows and the slider
- * semantics all come for free. --played is set inline from the component.
+ * The intro scrubber is an invisible range input laid over the drawn bar, so
+ * dragging, keyboard arrows and the slider semantics come from the platform
+ * while the visible fill stays a div that can be animated. The thumb is kept
+ * narrow so the platform's value mapping stays close to the pointer.
  */
 .scrub {
   -webkit-appearance: none;
   appearance: none;
-  width: 100%;
-  /* A finger-friendly hit area around a 4px track. */
-  height: 1rem;
   background: transparent;
   cursor: pointer;
-}
-
-.scrub:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 5px;
-  border-radius: 9999px;
-}
-
-.scrub::-webkit-slider-runnable-track {
-  height: 4px;
-  border-radius: 9999px;
-  background: linear-gradient(
-    to right,
-    var(--color-accent) var(--played, 0%),
-    var(--color-line) var(--played, 0%)
-  );
+  opacity: 0;
 }
 
 .scrub::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 11px;
-  height: 11px;
-  margin-top: -3.5px;
-  border-radius: 9999px;
-  background: var(--color-accent);
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-
-.scrub:hover::-webkit-slider-thumb,
-.scrub:focus-visible::-webkit-slider-thumb {
-  opacity: 1;
-}
-
-.scrub::-moz-range-track {
-  height: 4px;
-  border-radius: 9999px;
-  background: var(--color-line);
-}
-
-.scrub::-moz-range-progress {
-  height: 4px;
-  border-radius: 9999px;
-  background: var(--color-accent);
+  width: 2px;
+  height: 16px;
 }
 
 .scrub::-moz-range-thumb {
-  width: 11px;
-  height: 11px;
+  width: 2px;
+  height: 16px;
   border: 0;
-  border-radius: 9999px;
-  background: var(--color-accent);
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-
-.scrub:hover::-moz-range-thumb,
-.scrub:focus-visible::-moz-range-thumb {
-  opacity: 1;
+  border-radius: 0;
 }

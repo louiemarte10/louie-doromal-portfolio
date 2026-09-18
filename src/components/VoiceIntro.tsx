@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { pickVoice } from "@/lib/pick-voice";
 import { voiceIntro, voiceIntroWords } from "@/lib/voice-intro";
 
@@ -211,7 +211,7 @@ export function VoiceIntro({ recordedSrc = null }: { recordedSrc?: string | null
   // speech. The callback keeps setState out of the effect body.
   useEffect(() => {
     if (!playing || recordedSrc) return;
-    const id = window.setInterval(() => setElapsed((value) => value + 1), 1000);
+    const id = window.setInterval(() => setElapsed((value) => value + 0.25), 250);
     return () => window.clearInterval(id);
   }, [playing, recordedSrc]);
 
@@ -249,15 +249,16 @@ export function VoiceIntro({ recordedSrc = null }: { recordedSrc?: string | null
     };
   }, [start, recordedSrc]);
 
-  // Word boundaries are exact but not every browser sends them, so the clock
-  // stands in when they are missing.
+  // Word boundaries give the true position in the script. Where a browser sends
+  // none, the clock stands in, held below the end so the bar cannot sit full
+  // while the narration is still going.
   const progress = recordedSrc
     ? total > 0
       ? Math.min(1, elapsed / total)
       : 0
     : spokenChars
       ? Math.min(1, spokenChars / voiceIntro.length)
-      : Math.min(1, elapsed / SPOKEN_SECONDS);
+      : Math.min(0.97, elapsed / SPOKEN_SECONDS);
 
   // While dragging, the bar follows the pointer rather than the narration.
   const shown = scrub ?? progress;
@@ -329,30 +330,48 @@ export function VoiceIntro({ recordedSrc = null }: { recordedSrc?: string | null
         <span className="text-sm text-bone">Intro</span>
 
         <span className="ml-auto font-mono text-xs tabular-nums text-muted">
-          {clock(shown * duration)}
-          <span className="text-muted/50">
-            {" / "}
-            {recordedSrc ? "" : "~"}
-            {clock(duration)}
-          </span>
+          {clock(scrub === null ? elapsed : scrub * duration)}
+          {/* Only a recording has a duration worth stating; for synthesised
+              speech it would be a guess that visibly disagrees with the bar. */}
+          {recordedSrc && total > 0 ? (
+            <span className="text-muted/50"> / {clock(total)}</span>
+          ) : null}
         </span>
       </div>
 
-      <input
-        type="range"
-        min={0}
-        max={1000}
-        step={1}
-        value={Math.round(shown * 1000)}
-        onChange={(event) => setScrub(Number(event.target.value) / 1000)}
-        onPointerUp={commitScrub}
-        onKeyUp={commitScrub}
-        onBlur={commitScrub}
-        aria-label="Seek through the introduction"
-        aria-valuetext={`${clock(shown * duration)} of ${clock(duration)}`}
-        className="scrub mt-1.5"
-        style={{ "--played": `${shown * 100}%` } as CSSProperties}
-      />
+      <div className="group relative mt-1.5 h-4 w-full">
+        <div className="pointer-events-none absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 overflow-hidden rounded-full bg-line">
+          <div
+            className={`h-full rounded-full bg-accent ${
+              scrub === null ? "transition-[width] duration-300 ease-linear" : ""
+            }`}
+            style={{ width: `${shown * 100}%` }}
+          />
+        </div>
+
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent opacity-0 transition-opacity group-hover:opacity-100 ${
+            scrub === null ? "" : "opacity-100"
+          }`}
+          style={{ left: `${shown * 100}%` }}
+        />
+
+        <input
+          type="range"
+          min={0}
+          max={1000}
+          step={1}
+          value={Math.round(shown * 1000)}
+          onChange={(event) => setScrub(Number(event.target.value) / 1000)}
+          onPointerUp={commitScrub}
+          onKeyUp={commitScrub}
+          onBlur={commitScrub}
+          aria-label="Seek through the introduction"
+          aria-valuetext={`${Math.round(shown * 100)} percent`}
+          className="scrub absolute inset-0 h-full w-full"
+        />
+      </div>
 
       {state === "unsupported" ? (
         <p className="mt-2 text-xs text-muted">
