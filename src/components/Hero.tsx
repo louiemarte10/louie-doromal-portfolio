@@ -1,8 +1,13 @@
 import { EmailLink } from "@/components/EmailLink";
 import { VoiceIntro } from "@/components/VoiceIntro";
+import { findRecordedIntro } from "@/lib/intro-audio";
 import { profile, stats } from "@/data/resume";
 
 export function Hero() {
+  // Resolved while the page is built: a recording in public/ replaces the
+  // browser voice without any code change.
+  const recordedSrc = findRecordedIntro();
+
   return (
     <section id="top" className="field relative overflow-hidden">
       <div className="mx-auto w-full max-w-5xl px-6 pb-20 pt-20 sm:pb-28 sm:pt-28">
@@ -26,7 +31,7 @@ export function Hero() {
           </p>
 
           <div className="mt-7">
-            <VoiceIntro />
+            <VoiceIntro recordedSrc={recordedSrc} />
           </div>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">

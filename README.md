@@ -121,13 +121,33 @@ minute. The script also narrates the featured projects straight from
 `src/data/resume.ts`, so adding a project adds it to the narration; project names
 are de-camel-cased for the ear, since "louieDevAgent" is unspeakable as written.
 
-`src/lib/pick-voice.ts` chooses the voice, and is import-free so it can be
-exercised on its own. `SpeechSynthesisVoice` exposes no gender, so a male voice
-can only be matched by name — and since **"female" contains "male"**, female
-markers are ruled out before either is matched, or every "... Female" voice would
-match as male. It resolves to David on Windows 10, Guy Online (Natural) on
-Windows 11, Google UK English Male on Chrome and Alex on macOS, falling back to
-any English voice when a machine has no male one installed.
+### Replacing the voice with a recording
+
+**No synthesiser passes for a real person, and none can blend two accents.** The
+Web Speech API hands over a fixed list of installed voices; rate, pitch and
+volume are the only controls. So for a voice that is genuinely Filipino-American
+and genuinely not obviously AI, record it.
+
+Drop an `intro.mp3` into `public/` and it takes over on the next build — no code
+change. `findRecordedIntro()` looks for it in a Server Component while the page
+is built, so nothing is requested when it is absent. A recording also reports its
+own duration and position, so the clock becomes exact rather than estimated.
+`.m4a`, `.ogg` and `.wav` work too.
+
+### Choosing a synthesised voice
+
+`src/lib/pick-voice.ts` does this, and is import-free so it can be exercised on
+its own. `SpeechSynthesisVoice` exposes neither gender nor accent, so both can
+only be guessed from the name and language tag — and since **"female" contains
+"male"**, female markers are ruled out before either is matched, or every
+"... Female" voice would match as male.
+
+Voices are ranked Philippine English, then a *neural* Filipino voice, then a
+neural English one. Legacy Tagalog voices are deliberately ranked below American
+English: they mispronounce English badly enough that the accent is not worth it.
+In practice that resolves to Angelo on a Windows 11 machine with Filipino
+installed, Guy Online (Natural) on Windows 11 without it, David on Windows 10 and
+Alex on macOS.
 
 ## Local development
 

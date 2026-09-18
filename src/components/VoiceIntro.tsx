@@ -9,9 +9,10 @@ type State = "idle" | "speaking" | "unsupported";
 /** Once per tab, so coming back from /resume does not restart the narration. */
 const PLAYED_KEY = "voice-intro-played";
 
-const RATE = 0.97;
+/** Brisk enough not to drag, slow enough to stay clear. */
+const RATE = 1.12;
 /** Synthesised speech lands near 165 words a minute before the rate is applied. */
-const TOTAL_SECONDS = Math.round((voiceIntroWords / (165 * RATE)) * 60);
+const SPOKEN_SECONDS = Math.round((voiceIntroWords / (165 * RATE)) * 60);
 
 function clock(seconds: number) {
   const whole = Math.max(0, Math.round(seconds));
@@ -26,18 +27,40 @@ function remember() {
   }
 }
 
-export function VoiceIntro() {
+export function VoiceIntro({ recordedSrc = null }: { recordedSrc?: string | null }) {
   const [state, setState] = useState<State>("idle");
   const [elapsed, setElapsed] = useState(0);
-  /** From real word-boundary events where the browser sends them. */
+  const [total, setTotal] = useState(recordedSrc ? 0 : SPOKEN_SECONDS);
+  /** From real word-boundary events, where the browser sends them. */
   const [spokenChars, setSpokenChars] = useState(0);
+
+  const audio = useRef<HTMLAudioElement | null>(null);
   // Chrome can garbage-collect a speaking utterance and cut it off mid-sentence;
   // holding the reference keeps it alive until it finishes.
-  const spoken = useRef<SpeechSynthesisUtterance | null>(null);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const started = useRef(false);
   const silenced = useRef(false);
 
   const play = useCallback(() => {
+    setElapsed(0);
+    setSpokenChars(0);
+
+    // A recording is always preferred: it is a real voice, at a real pace.
+    if (recordedSrc) {
+      const element = audio.current;
+      if (!element) return;
+      element.currentTime = 0;
+      setState("speaking");
+      element.play().then(
+        () => {
+          started.current = true;
+          remember();
+        },
+        () => setState("idle"), // Refused until the page has been interacted with.
+      );
+      return;
+    }
+
     if (!("speechSynthesis" in window)) {
       setState("unsupported");
       return;
@@ -50,7 +73,8 @@ export function VoiceIntro() {
     const voice = pickVoice(synth.getVoices());
     if (voice) utterance.voice = voice;
     utterance.rate = RATE;
-    utterance.pitch = 0.95;
+    // Left alone: shifting the pitch of an already male voice is one of the
+    // things that makes a synthesiser sound like one.
     utterance.onstart = () => {
       started.current = true;
       remember();
@@ -63,32 +87,36 @@ export function VoiceIntro() {
     };
     utterance.onerror = () => setState("idle");
 
-    spoken.current = utterance;
-    setElapsed(0);
-    setSpokenChars(0);
+    utteranceRef.current = utterance;
     setState("speaking");
     synth.speak(utterance);
-  }, []);
+  }, [recordedSrc]);
 
   const stop = useCallback(() => {
     silenced.current = true; // A later click must not start it again.
-    window.speechSynthesis.cancel();
+    if (recordedSrc) {
+      audio.current?.pause();
+      if (audio.current) audio.current.currentTime = 0;
+    } else if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
     setState("idle");
     setElapsed(0);
     setSpokenChars(0);
-  }, []);
+  }, [recordedSrc]);
 
   const speaking = state === "speaking";
 
-  // The clock ticks itself; the callback keeps setState out of the effect body.
+  // A recording reports its own position, so this is only for synthesised
+  // speech. The callback keeps setState out of the effect body.
   useEffect(() => {
-    if (!speaking) return;
+    if (!speaking || recordedSrc) return;
     const id = window.setInterval(() => setElapsed((value) => value + 1), 1000);
     return () => window.clearInterval(id);
-  }, [speaking]);
+  }, [speaking, recordedSrc]);
 
   useEffect(() => {
-    if (!("speechSynthesis" in window)) return;
+    if (!recordedSrc && !("speechSynthesis" in window)) return;
 
     try {
       if (window.sessionStorage.getItem(PLAYED_KEY)) return;
@@ -102,7 +130,7 @@ export function VoiceIntro() {
      * and they are inconsistent about reporting that refusal, so the interaction
      * is a fallback rather than something the timer's failure triggers. The
      * delay also lets the voice list populate, otherwise the first attempt gets
-     * the default voice rather than a male one.
+     * the default voice rather than the one chosen here.
      */
     const attempt = () => {
       if (started.current || silenced.current) return;
@@ -117,18 +145,36 @@ export function VoiceIntro() {
       window.clearTimeout(timer);
       window.removeEventListener("pointerdown", attempt);
       window.removeEventListener("keydown", attempt);
-      window.speechSynthesis.cancel();
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     };
-  }, [play]);
+  }, [play, recordedSrc]);
 
   // Word boundaries are exact but not every browser sends them, so the clock
   // stands in when they are missing.
-  const progress = spokenChars
-    ? Math.min(1, spokenChars / voiceIntro.length)
-    : Math.min(1, elapsed / TOTAL_SECONDS);
+  const progress = recordedSrc
+    ? total > 0
+      ? Math.min(1, elapsed / total)
+      : 0
+    : spokenChars
+      ? Math.min(1, spokenChars / voiceIntro.length)
+      : Math.min(1, elapsed / SPOKEN_SECONDS);
 
   return (
     <div>
+      {recordedSrc ? (
+        <audio
+          ref={audio}
+          src={recordedSrc}
+          preload="metadata"
+          onLoadedMetadata={(event) => setTotal(event.currentTarget.duration || 0)}
+          onTimeUpdate={(event) => setElapsed(event.currentTarget.currentTime)}
+          onEnded={() => {
+            setState("idle");
+            setElapsed(0);
+          }}
+        />
+      ) : null}
+
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <button
           type="button"
@@ -148,15 +194,10 @@ export function VoiceIntro() {
 
         <p
           className="font-mono text-xs tabular-nums text-muted"
-          aria-live="off"
-          aria-label={
-            speaking
-              ? `${clock(elapsed)} of about ${clock(TOTAL_SECONDS)}`
-              : `About ${clock(TOTAL_SECONDS)} long`
-          }
+          aria-label={`${clock(elapsed)} of ${clock(total)}`}
         >
-          {speaking ? clock(elapsed) : "0:00"}
-          <span className="text-muted/50"> / {clock(TOTAL_SECONDS)}</span>
+          {clock(speaking ? elapsed : 0)}
+          <span className="text-muted/50"> / {clock(total)}</span>
         </p>
       </div>
 
