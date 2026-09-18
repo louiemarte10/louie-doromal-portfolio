@@ -232,6 +232,11 @@ export function ResumeSheet({
                   </a>
                 ) : null}
               </h3>
+              {hasText(project.context) ? (
+                <p className={`mt-0.5 italic text-paper-soft ${t.small}`}>
+                  {project.context}
+                </p>
+              ) : null}
               {hasText(project.blurb) ? (
                 <p className={`mt-0.5 leading-[1.45] text-paper-soft ${t.small}`}>
                   {project.blurb}

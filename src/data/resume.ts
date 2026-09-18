@@ -199,19 +199,6 @@ export const projects: Project[] = [
     featured: true,
   },
   {
-    name: "Month-to-Date (MTD) Reports System",
-    context: "Callbox Inc. · company GitHub",
-    blurb:
-      "A full month-to-date reporting system for the business, maintained across multiple branches with a CI pipeline.",
-    points: [
-      "API integrations feeding a reporting layer used across the company.",
-      "Data visualization and automated report generation.",
-      "Codebase managed through GitHub with a branching strategy and CI.",
-    ],
-    stack: ["PHP Laravel", "JavaScript", "MySQL", "CI"],
-    featured: true,
-  },
-  {
     name: "Mission Control Dashboard",
     context: "Personal · louie-agent-dashboard",
     blurb:
@@ -228,7 +215,7 @@ export const projects: Project[] = [
   },
   {
     name: "Brain Hub",
-    context: "Team project · brain-hub.xyz",
+    context: "Front-end developer · brain-hub.xyz",
     blurb:
       "Enrollment, payments and billing for a multi-branch review center — a live system carrying 6,000+ student records.",
     points: [

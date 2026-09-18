@@ -475,7 +475,9 @@ export function ResumeBuilder() {
 
             <Fieldset
               title="Projects"
-              onAdd={() => add("projects", { name: "", url: "", blurb: "", stack: [] })}
+              onAdd={() =>
+                add("projects", { name: "", context: "", url: "", blurb: "", stack: [] })
+              }
             >
               {content.projects.map((project, index) => (
                 <Row key={index} onRemove={() => remove("projects", index)}>
@@ -483,6 +485,12 @@ export function ResumeBuilder() {
                     title="Name"
                     value={project.name}
                     onChange={(name) => update("projects", index, { name })}
+                  />
+                  <Field
+                    title="Your role"
+                    value={project.context}
+                    onChange={(context) => update("projects", index, { context })}
+                    placeholder="Front-end developer"
                   />
                   <Field
                     title="URL"

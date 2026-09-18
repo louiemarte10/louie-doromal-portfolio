@@ -32,7 +32,14 @@ export type ResumeContent = {
     points: string[];
     tags: string[];
   }[];
-  projects: { name: string; url: string; blurb: string; stack: string[] }[];
+  projects: {
+    name: string;
+    /** Role or affiliation, e.g. "Front-end developer". */
+    context: string;
+    url: string;
+    blurb: string;
+    stack: string[];
+  }[];
   education: { degree: string; school: string; period: string }[];
   awards: { title: string; issuer: string; date: string }[];
   references: { name: string; title: string; phone: string }[];
@@ -64,6 +71,9 @@ export const ownerContent: ResumeContent = {
     .filter((project) => project.featured)
     .map((project) => ({
       name: project.name,
+      // The card's context reads "Front-end developer · brain-hub.xyz"; the
+      // address is shown beside the name already, so only the role is kept.
+      context: project.context.split("·")[0].trim(),
       url: project.live ?? project.href ?? "",
       blurb: project.blurb,
       stack: [...project.stack],
@@ -100,7 +110,7 @@ export const blankContent: ResumeContent = {
   experience: [
     { title: "", company: "", period: "", summary: "", points: [], tags: [] },
   ],
-  projects: [{ name: "", url: "", blurb: "", stack: [] }],
+  projects: [{ name: "", context: "", url: "", blurb: "", stack: [] }],
   education: [{ degree: "", school: "", period: "" }],
   awards: [{ title: "", issuer: "", date: "" }],
   references: [{ name: "", title: "", phone: "" }],

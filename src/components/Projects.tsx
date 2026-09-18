@@ -1,7 +1,16 @@
 import { Section } from "@/components/Section";
 import { projects, type Project } from "@/data/resume";
 
-function ProjectCard({ project, featured = false }: { project: Project; featured?: boolean }) {
+function ProjectCard({
+  project,
+  featured = false,
+  wide = false,
+}: {
+  project: Project;
+  featured?: boolean;
+  /** Fills the spare column so an odd card does not leave a gap in the grid. */
+  wide?: boolean;
+}) {
   // The card as a whole points at the live site when there is one, and falls
   // back to the repository. No target means there is nothing to click.
   const target = project.live ?? project.href ?? null;
@@ -13,7 +22,7 @@ function ProjectCard({ project, featured = false }: { project: Project; featured
     <article
       className={`relative flex flex-col bg-ink-2 p-6 transition-colors ${
         target ? "group hover:bg-ink-3 focus-within:bg-ink-3" : ""
-      }`}
+      } ${wide ? "sm:max-lg:col-span-2" : ""}`}
     >
       <p className="font-mono text-[10px] uppercase tracking-wider text-muted">
         {project.context}
@@ -118,9 +127,14 @@ export function Projects() {
       title="Selected work"
       lead="Systems I built."
     >
-      <div className="grid gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-2">
-        {featured.map((project) => (
-          <ProjectCard key={project.name} project={project} featured />
+      <div className="grid gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
+        {featured.map((project, index) => (
+          <ProjectCard
+            key={project.name}
+            project={project}
+            featured
+            wide={featured.length % 2 === 1 && index === featured.length - 1}
+          />
         ))}
       </div>
 
