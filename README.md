@@ -114,6 +114,13 @@ usually begins immediately; on Chrome it begins at the first click. A
 `sessionStorage` flag keeps it to once per tab, so returning from `/resume` does
 not restart it, and the button doubles as a stop control.
 
+The control shows a clock and a progress bar. Progress comes from the utterance's
+real word-boundary events, falling back to the elapsed clock where a browser does
+not send them, and the total is estimated from the word count at 165 words a
+minute. The script also narrates the featured projects straight from
+`src/data/resume.ts`, so adding a project adds it to the narration; project names
+are de-camel-cased for the ear, since "louieDevAgent" is unspeakable as written.
+
 `src/lib/pick-voice.ts` chooses the voice, and is import-free so it can be
 exercised on its own. `SpeechSynthesisVoice` exposes no gender, so a male voice
 can only be matched by name — and since **"female" contains "male"**, female
