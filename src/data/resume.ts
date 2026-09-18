@@ -7,6 +7,8 @@ export const profile = {
   phone: "0938 130 9230",
   github: "https://github.com/louiemarte10",
   githubHandle: "louiemarte10",
+  linkedin: "https://www.linkedin.com/in/louie-doromal-487177226/",
+  linkedinHandle: "louie-doromal",
   tagline:
     "I build production AI features into enterprise systems — and the full-stack web applications around them.",
   summary: [

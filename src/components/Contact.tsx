@@ -1,11 +1,24 @@
+import { EmailLink } from "@/components/EmailLink";
 import { profile } from "@/data/resume";
 
-const channels = [
-  { label: "Email", value: profile.email, href: `mailto:${profile.email}` },
+type Channel = {
+  label: string;
+  value: string;
+  href?: string;
+  /** Rendered by EmailLink so the click copies the address as well. */
+  email?: boolean;
+};
+
+const channels: Channel[] = [
+  { label: "Email", value: profile.email, email: true },
   { label: "Phone", value: profile.phone, href: `tel:+63${profile.phone.replace(/\D/g, "").slice(1)}` },
   { label: "GitHub", value: `@${profile.githubHandle}`, href: profile.github },
+  { label: "LinkedIn", value: `in/${profile.linkedinHandle}`, href: profile.linkedin },
   { label: "Based in", value: profile.location },
 ];
+
+const cellLink =
+  "mt-2 block break-words text-sm text-bone transition-colors hover:text-accent";
 
 export function Contact() {
   return (
@@ -19,18 +32,29 @@ export function Contact() {
           Got something that needs building? I am open to talking.
         </h2>
 
-        <div className="mt-12 grid gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
-          {channels.map((channel) => (
-            <div key={channel.label} className="bg-ink-2 px-5 py-6">
+        <div className="mt-12 grid gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-2 lg:grid-cols-5">
+          {channels.map((channel, index) => (
+            <div
+              key={channel.label}
+              className={`bg-ink-2 px-5 py-6 ${
+                index === channels.length - 1 ? "sm:max-lg:col-span-2" : ""
+              }`}
+            >
               <p className="font-mono text-[10px] uppercase tracking-wider text-muted">
                 {channel.label}
               </p>
-              {channel.href ? (
+              {channel.email ? (
+                <EmailLink
+                  email={channel.value}
+                  label={channel.value}
+                  className={cellLink}
+                />
+              ) : channel.href ? (
                 <a
                   href={channel.href}
                   target={channel.href.startsWith("http") ? "_blank" : undefined}
                   rel={channel.href.startsWith("http") ? "noreferrer" : undefined}
-                  className="mt-2 block break-words text-sm text-bone transition-colors hover:text-accent"
+                  className={cellLink}
                 >
                   {channel.value}
                 </a>

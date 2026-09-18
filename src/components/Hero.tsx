@@ -1,3 +1,4 @@
+import { EmailLink } from "@/components/EmailLink";
 import { profile, stats } from "@/data/resume";
 
 export function Hero() {
@@ -39,11 +40,19 @@ export function Hero() {
               GitHub
             </a>
             <a
-              href={`mailto:${profile.email}`}
+              href={profile.linkedin}
+              target="_blank"
+              rel="noreferrer"
               className="rounded-full border border-line px-5 py-2.5 text-sm text-bone transition-colors hover:border-accent hover:text-accent"
             >
-              Email me
+              LinkedIn
             </a>
+            <EmailLink
+              email={profile.email}
+              label="Email me"
+              copiedLabel="Email copied ✓"
+              className="rounded-full border border-line px-5 py-2.5 text-sm text-bone transition-colors hover:border-accent hover:text-accent"
+            />
           </div>
         </div>
 

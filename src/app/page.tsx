@@ -15,7 +15,7 @@ const jsonLd = {
   jobTitle: profile.role,
   email: `mailto:${profile.email}`,
   url: "https://louie-d-portfolio.vercel.app",
-  sameAs: [profile.github],
+  sameAs: [profile.github, profile.linkedin],
   address: {
     "@type": "PostalAddress",
     addressLocality: "Iloilo City",
