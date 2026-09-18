@@ -5,6 +5,7 @@ import { Experience } from "@/components/Experience";
 import { Projects } from "@/components/Projects";
 import { RecentWork } from "@/components/RecentWork";
 import { Background } from "@/components/Background";
+import { ResumeBuilderCta } from "@/components/ResumeBuilderCta";
 import { Contact, Footer } from "@/components/Contact";
 import { profile, experience, socials } from "@/data/resume";
 
@@ -42,6 +43,7 @@ export default function Home() {
         <Projects />
         <RecentWork />
         <Background />
+        <ResumeBuilderCta />
         <Contact />
       </main>
       <Footer />

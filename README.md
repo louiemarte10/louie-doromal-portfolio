@@ -49,14 +49,24 @@ the resume and the portfolio can never disagree. The page is styled to print:
 `break-inside: avoid` so no role is split across pages.
 
 `/resume/build` is a builder that renders the same sheet from whatever you type
-into it, so anyone can produce a resume on this template. The form keeps its draft
-in `localStorage` only — nothing is uploaded — and it is loaded with `ssr: false`,
-since a saved draft and a photo picked through `FileReader` exist only in the
-browser. Printing it hides the form and prints the sheet alone.
+into it, so anyone can produce a resume on this template. It is linked from the
+**Resume builder** section on the landing page (`/#resume-builder`), separately
+from my own resume. The form keeps its draft in `localStorage` only — nothing is
+uploaded — and it is loaded with `ssr: false`, since a saved draft and a photo
+picked through `FileReader` exist only in the browser. Printing it hides the form
+and prints the sheet alone.
 
 Both pages render `src/components/resume/ResumeSheet.tsx`, which takes a
-`ResumeContent` (see `src/lib/resume-content.ts`); `ownerContent` maps
-`src/data/resume.ts` onto that shape. One template, two sources of data.
+`ResumeContent` (see `src/lib/resume-content.ts`) and a `Template`;
+`ownerContent` maps `src/data/resume.ts` onto that shape.
+
+`src/lib/resume-templates.ts` holds the five templates the builder offers
+(Editorial, Classic, Sidebar, Compact, Banner). A template is class names plus
+two structural choices — `layout` (single column or left rail) and `header`
+(split, centred or banner) — so one sheet component covers all five instead of
+five near-copies. Those class strings must stay literal in that file: Tailwind
+only generates classes it can see in the source. My own resume always uses
+Editorial, which is what the committed PDF is printed from.
 
 ### Printing
 

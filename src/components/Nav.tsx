@@ -7,6 +7,7 @@ const links = [
   { href: "#work", label: "Work" },
   { href: "#recent", label: "Recent" },
   { href: "#background", label: "Background" },
+  { href: "#resume-builder", label: "Builder" },
 ];
 
 export function Nav() {

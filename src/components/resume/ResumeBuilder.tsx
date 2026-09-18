@@ -10,8 +10,15 @@ import {
   ownerContent,
   type ResumeContent,
 } from "@/lib/resume-content";
+import {
+  defaultTemplate,
+  templateById,
+  templates,
+  type TemplateId,
+} from "@/lib/resume-templates";
 
 const STORAGE_KEY = "resume-builder-v1";
+const TEMPLATE_KEY = "resume-builder-template-v1";
 
 /** Only ever a convenience: the draft is per-browser and never leaves it. */
 function loadDraft(): ResumeContent | null {
@@ -30,6 +37,22 @@ function saveDraft(content: ResumeContent) {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
   } catch {
     // Quota exceeded (a large photo) or storage blocked: the session still works.
+  }
+}
+
+function loadTemplateId(): TemplateId {
+  try {
+    return templateById(window.localStorage.getItem(TEMPLATE_KEY)).id;
+  } catch {
+    return defaultTemplate.id;
+  }
+}
+
+function saveTemplateId(id: TemplateId) {
+  try {
+    window.localStorage.setItem(TEMPLATE_KEY, id);
+  } catch {
+    // Storage blocked; the choice still applies for this session.
   }
 }
 
@@ -119,10 +142,16 @@ export function ResumeBuilder() {
   const [content, setContent] = useState<ResumeContent>(
     () => loadDraft() ?? blankContent,
   );
+  const [templateId, setTemplateId] = useState<TemplateId>(loadTemplateId);
+  const template = templateById(templateId);
 
   useEffect(() => {
     saveDraft(content);
   }, [content]);
+
+  useEffect(() => {
+    saveTemplateId(templateId);
+  }, [templateId]);
 
   function patch(changes: Partial<ResumeContent>) {
     setContent((current) => ({ ...current, ...changes }));
@@ -169,8 +198,8 @@ export function ResumeBuilder() {
           <div>
             <h1 className="text-lg font-medium text-bone">Build your resume</h1>
             <p className="mt-0.5 text-xs text-muted">
-              Same template as mine. Your draft stays in this browser — nothing is
-              uploaded.
+              Five templates, printed at A4. Your draft stays in this browser —
+              nothing is uploaded.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2.5">
@@ -206,6 +235,39 @@ export function ResumeBuilder() {
             className="space-y-5 print:hidden"
             onSubmit={(event) => event.preventDefault()}
           >
+            <section>
+              <h2 className="mb-3 font-mono text-[11px] uppercase tracking-[0.2em] text-accent">
+                Template
+              </h2>
+              <div className="space-y-1.5">
+                {templates.map((option) => {
+                  const active = option.id === templateId;
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => setTemplateId(option.id)}
+                      className={`block w-full rounded-lg border px-3 py-2 text-left transition-colors ${
+                        active
+                          ? "border-accent bg-ink-3"
+                          : "border-line/70 bg-ink-2 hover:border-line"
+                      }`}
+                    >
+                      <span
+                        className={`block text-sm ${active ? "text-accent" : "text-bone"}`}
+                      >
+                        {option.label}
+                      </span>
+                      <span className="mt-0.5 block text-[11px] leading-snug text-muted">
+                        {option.note}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
             <Fieldset title="Basics">
               <Field
                 title="Full name"
@@ -471,7 +533,7 @@ export function ResumeBuilder() {
           </form>
 
           <div className="min-w-0 overflow-x-auto print:overflow-visible">
-            <ResumeSheet content={content} />
+            <ResumeSheet content={content} template={template} />
           </div>
         </div>
       </div>

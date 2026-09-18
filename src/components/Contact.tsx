@@ -26,7 +26,7 @@ export function Contact() {
     <section id="contact" className="field scroll-mt-24 border-t border-line/70 py-20 sm:py-28">
       <div className="mx-auto w-full max-w-5xl px-6">
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-accent">
-          06 — Contact
+          07 — Contact
         </p>
 
         <h2 className="mt-4 max-w-2xl text-2xl font-medium leading-snug text-bone sm:text-4xl">
