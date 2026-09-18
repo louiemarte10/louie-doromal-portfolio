@@ -63,10 +63,12 @@ const work = [
 
 const closing = [
   "There is more on the page below, including a resume builder you can use to make your own resume on this template.",
-  "If you have any questions, please feel free to email me, or reach out through any of the links here. I would be glad to hear from you.",
+  "If you have any questions, or a project you would like built, please feel free to contact me through any of the details on this page.",
+  "You will find my email address, my phone number, and links to my GitHub and LinkedIn profiles in the contact section at the bottom.",
+  "Whether it is about a role, a project you have in mind, or simply a question about how something here was put together, I would be glad to hear from you.",
   "And always remember: just keep moving forward. Progress beats perfection every single time.",
   "Start small, stay consistent, and let the work compound. The best time to begin was yesterday, and the next best time is right now.",
-  "Thanks for stopping by.",
+  "Thanks for stopping by, and good luck with whatever you are building.",
 ];
 
 export const voiceIntro = [...opening, ...work, ...closing].join(" ");

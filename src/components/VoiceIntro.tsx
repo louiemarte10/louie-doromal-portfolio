@@ -11,8 +11,14 @@ const PLAYED_KEY = "voice-intro-played";
 
 /** A shade above natural pace: brisk without running away from the listener. */
 const RATE = 1.05;
-/** Synthesised speech lands near 165 words a minute before the rate is applied. */
-const SPOKEN_SECONDS = Math.round((voiceIntroWords / (165 * RATE)) * 60);
+/**
+ * Measured against this script rather than assumed: installed voices land near
+ * 150 words a minute before the rate is applied. It is only an opening guess —
+ * the real pace is whatever the listener's voice manages, so the total is
+ * corrected from actual progress below.
+ */
+const BASE_WPM = 150;
+const SPOKEN_SECONDS = Math.round((voiceIntroWords / (BASE_WPM * RATE)) * 60);
 
 function clock(seconds: number) {
   const whole = Math.max(0, Math.round(seconds));
@@ -256,6 +262,18 @@ export function VoiceIntro({ recordedSrc = null }: { recordedSrc?: string | null
   // While dragging, the bar follows the pointer rather than the narration.
   const shown = scrub ?? progress;
 
+  /**
+   * A recording knows its own length. Synthesised speech does not, and the
+   * opening guess was what let the clock run past the total, so once there is
+   * enough progress to divide by, the total is derived from the real pace
+   * instead. By construction that can never be less than the time elapsed.
+   */
+  const duration = recordedSrc
+    ? total
+    : progress > 0.08
+      ? elapsed / progress
+      : SPOKEN_SECONDS;
+
   function commitScrub() {
     if (scrub === null) return;
     seek(scrub);
@@ -311,8 +329,12 @@ export function VoiceIntro({ recordedSrc = null }: { recordedSrc?: string | null
         <span className="text-sm text-bone">Intro</span>
 
         <span className="ml-auto font-mono text-xs tabular-nums text-muted">
-          {clock(shown * total)}
-          <span className="text-muted/50"> / {clock(total)}</span>
+          {clock(shown * duration)}
+          <span className="text-muted/50">
+            {" / "}
+            {recordedSrc ? "" : "~"}
+            {clock(duration)}
+          </span>
         </span>
       </div>
 
@@ -327,7 +349,7 @@ export function VoiceIntro({ recordedSrc = null }: { recordedSrc?: string | null
         onKeyUp={commitScrub}
         onBlur={commitScrub}
         aria-label="Seek through the introduction"
-        aria-valuetext={`${clock(shown * total)} of ${clock(total)}`}
+        aria-valuetext={`${clock(shown * duration)} of ${clock(duration)}`}
         className="scrub mt-1.5"
         style={{ "--played": `${shown * 100}%` } as CSSProperties}
       />

@@ -116,8 +116,15 @@ not restart it, and the button doubles as a stop control.
 
 The control is a small player: play or pause, a clock and a progress bar.
 Progress comes from the utterance's real word-boundary events, falling back to
-the elapsed clock where a browser does not send them, and the total is estimated
-from the word count at 165 words a minute.
+the elapsed clock where a browser does not send them.
+
+The total is shown with a `~` because synthesised speech has no knowable
+duration: the pace is whatever voice the listener happens to have. An opening
+guess comes from the word count at 150 words a minute, then once there is enough
+progress to divide by, the total is re-derived as `elapsed / progress`. That
+correction is what stops the clock running past the end — dividing by a capped
+progress can never yield a total below the time already elapsed. A recording
+skips all of this and reports its own duration exactly.
 
 The bar is a real scrubber: click or drag it to jump. A recording is seeked
 outright; synthesised speech cannot be, so the equivalent **character** offset is
