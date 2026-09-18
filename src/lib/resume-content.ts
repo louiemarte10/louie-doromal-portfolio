@@ -5,7 +5,6 @@ import {
   experience,
   profile,
   projects,
-  references,
   skillGroups,
 } from "@/data/resume";
 
@@ -88,11 +87,9 @@ export const ownerContent: ResumeContent = {
     issuer: award.issuer,
     date: award.date,
   })),
-  references: references.map((person) => ({
-    name: person.name,
-    title: person.title,
-    phone: person.phone,
-  })),
+  // Left empty on purpose: references are given on request, not published on a
+  // page anyone can read. The builder still offers the section to its own users.
+  references: [],
   certification,
 };
 

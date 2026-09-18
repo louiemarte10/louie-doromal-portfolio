@@ -180,6 +180,21 @@ In practice that resolves to Angelo on a Windows 11 machine with Filipino
 installed, Guy Online (Natural) on Windows 11 without it, David on Windows 10 and
 Alex on macOS.
 
+## Error recovery
+
+`src/app/resume/error.tsx` covers `/resume` and `/resume/build`. The builder is
+loaded with `ssr: false`, so its markup arrives as a script chunk rather than in
+the HTML — and a visitor navigating just after a deploy can be holding a page
+that asks for a chunk the new build has replaced. Without a boundary that ends at
+the browser's own "this page couldn't load" screen with no way back. `reset()`
+covers a transient fault; a stale chunk needs the document fetched again, so a
+reload is offered separately, and the link home is a plain anchor on purpose —
+`next/link` would route through the same broken runtime.
+
+My own resume carries no character references: those are given on request, not
+published on a page anyone can read. The builder still offers the section, since
+whoever is filling it in decides what goes on their own copy.
+
 ## Local development
 
 ```bash

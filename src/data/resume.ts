@@ -379,30 +379,5 @@ export const repoFallback: Repo[] = [
   },
 ];
 
-export type Reference = {
-  name: string;
-  title: string;
-  phone: string;
-};
-
-/** Shown on the resume only, not on the landing page. */
-export const references: Reference[] = [
-  {
-    name: "Rey Guidoriagao Jr.",
-    title: "Full Stack React Developer — Satellite Office Solutions",
-    phone: "091822554329",
-  },
-  {
-    name: "Emmanuel Katipunan",
-    title: "Software Developer / AI Engineer",
-    phone: "09162400105",
-  },
-  {
-    name: "Lucky John Faderon",
-    title: "Head of AI Engineer",
-    phone: "09499967617",
-  },
-];
-
 export const certification =
   "I hereby certify that the above information is true and correct to the best of my knowledge and ability.";
