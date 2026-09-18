@@ -6,7 +6,7 @@ import { Projects } from "@/components/Projects";
 import { RecentWork } from "@/components/RecentWork";
 import { Background } from "@/components/Background";
 import { Contact, Footer } from "@/components/Contact";
-import { profile, experience } from "@/data/resume";
+import { profile, experience, socials } from "@/data/resume";
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -15,7 +15,7 @@ const jsonLd = {
   jobTitle: profile.role,
   email: `mailto:${profile.email}`,
   url: "https://louie-d-portfolio.vercel.app",
-  sameAs: [profile.github, profile.linkedin],
+  sameAs: [profile.github, ...socials.map((social) => social.href)],
   address: {
     "@type": "PostalAddress",
     addressLocality: "Iloilo City",

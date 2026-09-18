@@ -18,6 +18,17 @@ export const profile = {
   ],
 } as const;
 
+export type Social = {
+  label: "Facebook" | "Instagram" | "LinkedIn";
+  href: string;
+};
+
+export const socials: Social[] = [
+  { label: "Facebook", href: "https://www.facebook.com/louiemarte10/" },
+  { label: "Instagram", href: "https://www.instagram.com/louiemartea/" },
+  { label: "LinkedIn", href: profile.linkedin },
+];
+
 export const stats = [
   { value: "7+", label: "Years building software" },
   { value: "4", label: "Companies shipped for" },

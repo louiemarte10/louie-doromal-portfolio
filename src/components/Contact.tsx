@@ -1,4 +1,5 @@
 import { EmailLink } from "@/components/EmailLink";
+import { SocialLinks } from "@/components/SocialLinks";
 import { profile } from "@/data/resume";
 
 type Channel = {
@@ -72,11 +73,14 @@ export function Contact() {
 export function Footer() {
   return (
     <footer className="border-t border-line/70 py-8">
-      <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-3 px-6">
-        <p className="text-xs text-muted">
+      <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5 px-6 sm:flex-row sm:justify-between sm:gap-3">
+        <p className="order-2 text-xs text-muted sm:order-1">
           © {new Date().getFullYear()} {profile.name}
         </p>
-        <p className="font-mono text-[10px] uppercase tracking-wider text-muted">
+        <div className="order-1 sm:order-2">
+          <SocialLinks />
+        </div>
+        <p className="order-3 font-mono text-[10px] uppercase tracking-wider text-muted">
           Next.js · TypeScript · Tailwind · Vercel
         </p>
       </div>
