@@ -1,46 +1,31 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { pickVoice } from "@/lib/pick-voice";
 import { voiceIntro } from "@/lib/voice-intro";
 
 type State = "idle" | "speaking" | "unsupported";
 
-/**
- * Narrates the introduction with the browser's own Web Speech API: free, needs
- * no key and sends nothing anywhere. It cannot start on its own — browsers only
- * allow audio after a real click, and unannounced speech would be hostile
- * anyway — so it is a button the visitor presses.
- */
+/** Once per tab, so coming back from /resume does not restart the narration. */
+const PLAYED_KEY = "voice-intro-played";
+
+function remember() {
+  try {
+    window.sessionStorage.setItem(PLAYED_KEY, "1");
+  } catch {
+    // Storage blocked; autoplay is simply attempted again on the next load.
+  }
+}
+
 export function VoiceIntro() {
   const [state, setState] = useState<State>("idle");
   // Chrome can garbage-collect a speaking utterance and cut it off mid-sentence;
   // holding the reference keeps it alive until it finishes.
   const spoken = useRef<SpeechSynthesisUtterance | null>(null);
+  const started = useRef(false);
+  const silenced = useRef(false);
 
-  useEffect(() => {
-    return () => {
-      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-    };
-  }, []);
-
-  /** Best available English voice, else whatever the browser defaults to. */
-  function pickVoice(synth: SpeechSynthesis) {
-    const english = synth.getVoices().filter((voice) => /^en\b|^en[-_]/i.test(voice.lang));
-    if (english.length === 0) return null;
-    const preferred = ["natural", "google", "online"];
-    for (const hint of preferred) {
-      const match = english.find((voice) => voice.name.toLowerCase().includes(hint));
-      if (match) return match;
-    }
-    return english.find((voice) => /^en[-_]us/i.test(voice.lang)) ?? english[0];
-  }
-
-  function stop() {
-    window.speechSynthesis.cancel();
-    setState("idle");
-  }
-
-  function play() {
+  const play = useCallback(() => {
     if (!("speechSynthesis" in window)) {
       setState("unsupported");
       return;
@@ -50,16 +35,62 @@ export function VoiceIntro() {
     synth.cancel();
 
     const utterance = new SpeechSynthesisUtterance(voiceIntro);
-    const voice = pickVoice(synth);
+    const voice = pickVoice(synth.getVoices());
     if (voice) utterance.voice = voice;
     utterance.rate = 0.97;
+    utterance.pitch = 0.95;
+    utterance.onstart = () => {
+      started.current = true;
+      remember();
+      setState("speaking");
+    };
     utterance.onend = () => setState("idle");
     utterance.onerror = () => setState("idle");
 
     spoken.current = utterance;
     setState("speaking");
     synth.speak(utterance);
-  }
+  }, []);
+
+  const stop = useCallback(() => {
+    silenced.current = true; // A later click must not start it again.
+    window.speechSynthesis.cancel();
+    setState("idle");
+  }, []);
+
+  useEffect(() => {
+    if (!("speechSynthesis" in window)) return;
+
+    try {
+      if (window.sessionStorage.getItem(PLAYED_KEY)) return;
+    } catch {
+      // Storage blocked; fall through and try anyway.
+    }
+
+    /**
+     * Tried on a timer and again on the visitor's first interaction, whichever
+     * lands first. Browsers refuse audio until a page has been interacted with,
+     * and they are inconsistent about reporting that refusal, so the interaction
+     * is a fallback rather than something the timer's failure triggers. The
+     * delay also lets the voice list populate, otherwise the first attempt gets
+     * the default voice rather than a male one.
+     */
+    const attempt = () => {
+      if (started.current || silenced.current) return;
+      play();
+    };
+
+    const timer = window.setTimeout(attempt, 600);
+    window.addEventListener("pointerdown", attempt);
+    window.addEventListener("keydown", attempt);
+
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("pointerdown", attempt);
+      window.removeEventListener("keydown", attempt);
+      window.speechSynthesis.cancel();
+    };
+  }, [play]);
 
   const speaking = state === "speaking";
 

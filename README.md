@@ -100,16 +100,27 @@ the committed PDF is behind.
 
 ## Spoken introduction
 
-The **Hear my intro** button in the hero narrates `src/lib/voice-intro.ts` through
-the browser's own Web Speech API — free, no key, and nothing leaves the machine.
-The script is kept apart from the on-page copy because it is written for the ear:
-no dashes or abbreviations a synthesiser would spell out.
+The hero narrates `src/lib/voice-intro.ts` through the browser's own Web Speech
+API — free, no key, and nothing leaves the machine. The script is kept apart from
+the on-page copy because it is written for the ear: no dashes or abbreviations a
+synthesiser would spell out.
 
-It cannot start by itself. Browsers only allow audio after a real click, and
-unannounced speech would be hostile anyway, so it is a button rather than an
-autoplay. The voice comes from whatever the operating system has installed, so it
-sounds different across machines; the component prefers a voice whose name looks
-like a natural or Google one before falling back to any English voice.
+It starts on its own, with a caveat worth knowing before changing this code:
+**Chrome and Safari refuse audio until the page has been interacted with**, and
+they are inconsistent about reporting that refusal. So the narration is attempted
+on a short timer *and* on the visitor's first click or keypress, whichever lands
+first, with an `onstart` flag making sure it only ever runs once. On Firefox it
+usually begins immediately; on Chrome it begins at the first click. A
+`sessionStorage` flag keeps it to once per tab, so returning from `/resume` does
+not restart it, and the button doubles as a stop control.
+
+`src/lib/pick-voice.ts` chooses the voice, and is import-free so it can be
+exercised on its own. `SpeechSynthesisVoice` exposes no gender, so a male voice
+can only be matched by name — and since **"female" contains "male"**, female
+markers are ruled out before either is matched, or every "... Female" voice would
+match as male. It resolves to David on Windows 10, Guy Online (Natural) on
+Windows 11, Google UK English Male on Chrome and Alex on macOS, falling back to
+any English voice when a machine has no male one installed.
 
 ## Local development
 
