@@ -5,10 +5,12 @@ import Link from "next/link";
 import { PrintButton } from "@/components/PrintButton";
 import {
   awards,
+  certification,
   education,
   experience,
   profile,
   projects,
+  references,
   skillGroups,
 } from "@/data/resume";
 
@@ -204,6 +206,37 @@ export default function ResumePage() {
               ))}
             </div>
           </Block>
+        </div>
+
+        <Block title="Character references">
+          <div className="grid gap-x-8 gap-y-2.5 sm:grid-cols-3">
+            {references.map((person) => (
+              <div key={person.name} className="avoid-break">
+                <p className="text-[11px] font-semibold">{person.name}</p>
+                <p className="text-[10.5px] leading-snug text-paper-soft">
+                  {person.title}
+                </p>
+                <p className="mt-0.5 font-mono text-[10px] text-paper-soft">
+                  {person.phone}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Block>
+
+        <div className="avoid-break mt-5">
+          <p className="text-[10.5px] italic leading-snug text-paper-soft">
+            {certification}
+          </p>
+
+          <div className="mt-6 flex justify-end">
+            <div className="text-center">
+              <p className="border-b border-paper-ink pb-0.5 text-[11px] font-semibold uppercase tracking-wide">
+                {profile.name}
+              </p>
+              <p className="mt-1 text-[10.5px] text-paper-soft">Applicant</p>
+            </div>
+          </div>
         </div>
       </article>
     </div>
