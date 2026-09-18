@@ -118,7 +118,7 @@ export function Projects() {
       title="Selected work"
       lead="Systems I built."
     >
-      <div className="grid gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-2">
         {featured.map((project) => (
           <ProjectCard key={project.name} project={project} featured />
         ))}

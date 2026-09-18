@@ -216,6 +216,20 @@ export const projects: Project[] = [
     featured: true,
   },
   {
+    name: "Brain Hub",
+    context: "Team project · brain-hub.xyz",
+    blurb:
+      "Enrollment, payments and billing for a multi-branch review center — a live system carrying 6,000+ student records.",
+    points: [
+      "Student directory filtered by name, school and enrollee type, with remaining balance surfaced per record.",
+      "Payment posting and one-click Statement of Account generation per student.",
+      "Audit log capturing the actor, entity and API route behind every change.",
+    ],
+    stack: ["React", "Ant Design", "Tailwind CSS", "Vite", "Netlify"],
+    live: "https://brain-hub.xyz/",
+    featured: true,
+  },
+  {
     name: "The Eternals",
     context: "Personal · the-eternals",
     blurb:
