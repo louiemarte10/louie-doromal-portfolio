@@ -10,6 +10,13 @@
   --color-accent: #d8a657;
   --color-accent-soft: #f0d9a8;
 
+  /* Resume sheet reads as paper, on screen and on paper alike. */
+  --color-paper: #ffffff;
+  --color-paper-ink: #16191f;
+  --color-paper-soft: #4c5663;
+  --color-paper-rule: #d9dde4;
+  --color-paper-accent: #8a6412;
+
   --font-sans: var(--font-inter);
   --font-mono: var(--font-mono-code);
 }
@@ -56,5 +63,40 @@ body {
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+/* The resume preview is sized as an A4 sheet so the screen matches the print. */
+.resume-sheet {
+  width: 100%;
+  max-width: 210mm;
+  padding: clamp(1.25rem, 4vw, 14mm);
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 13mm 14mm;
+  }
+
+  html,
+  body {
+    background: #fff;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+
+  /* Page margins come from @page so every page gets them, not just the first. */
+  .resume-sheet {
+    max-width: none;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .avoid-break {
+    break-inside: avoid;
   }
 }

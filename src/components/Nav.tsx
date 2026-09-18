@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { profile } from "@/data/resume";
 
 const links = [
@@ -34,12 +35,20 @@ export function Nav() {
           ))}
         </ul>
 
-        <a
-          href="#contact"
-          className="rounded-full border border-line px-4 py-1.5 text-sm text-bone transition-colors hover:border-accent hover:text-accent"
-        >
-          Get in touch
-        </a>
+        <div className="flex items-center gap-2.5">
+          <Link
+            href="/resume"
+            className="rounded-full border border-line px-4 py-1.5 text-sm text-bone transition-colors hover:border-accent hover:text-accent"
+          >
+            Resume
+          </Link>
+          <a
+            href="#contact"
+            className="hidden rounded-full border border-line px-4 py-1.5 text-sm text-bone transition-colors hover:border-accent hover:text-accent sm:inline-block"
+          >
+            Get in touch
+          </a>
+        </div>
       </nav>
     </header>
   );
