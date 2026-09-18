@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { pickVoice } from "@/lib/pick-voice";
 import { voiceIntro, voiceIntroWords } from "@/lib/voice-intro";
 
@@ -40,6 +40,8 @@ export function VoiceIntro({ recordedSrc = null }: { recordedSrc?: string | null
   const [total, setTotal] = useState(recordedSrc ? 0 : SPOKEN_SECONDS);
   /** Absolute position in the script, from real word-boundary events. */
   const [spokenChars, setSpokenChars] = useState(0);
+  /** Position being dragged, before it is committed. */
+  const [scrub, setScrub] = useState<number | null>(null);
 
   const audio = useRef<HTMLAudioElement | null>(null);
   // Chrome can garbage-collect a speaking utterance and cut it off mid-sentence;
@@ -156,6 +158,46 @@ export function VoiceIntro({ recordedSrc = null }: { recordedSrc?: string | null
     speakFrom(resumeChar.current);
   }, [recordedSrc, speakFrom]);
 
+  /**
+   * Jumps to a fraction of the way through. A recording can be seeked outright;
+   * synthesised speech cannot, so the equivalent character offset is spoken
+   * from instead, which is close enough given the rate barely varies.
+   */
+  const seek = useCallback(
+    (fraction: number) => {
+      const clamped = Math.min(1, Math.max(0, fraction));
+
+      if (recordedSrc) {
+        const element = audio.current;
+        if (!element || !Number.isFinite(element.duration)) return;
+        element.currentTime = clamped * element.duration;
+        setElapsed(element.currentTime);
+        // Seeking while paused holds the silence; from a standstill it starts.
+        if (state === "idle") {
+          setState("playing");
+          void element.play().then(
+            () => {
+              started.current = true;
+              remember();
+            },
+            () => setState("idle"),
+          );
+        }
+        return;
+      }
+
+      const target = snapToWord(Math.floor(clamped * voiceIntro.length));
+      resumeChar.current = target;
+      setSpokenChars(target);
+      setElapsed(Math.round(clamped * SPOKEN_SECONDS));
+
+      // Dragging while paused moves the position without breaking the silence.
+      if (state === "paused") return;
+      if ("speechSynthesis" in window) speakFrom(target);
+    },
+    [recordedSrc, state, speakFrom],
+  );
+
   const playing = state === "playing";
   const paused = state === "paused";
 
@@ -211,6 +253,15 @@ export function VoiceIntro({ recordedSrc = null }: { recordedSrc?: string | null
       ? Math.min(1, spokenChars / voiceIntro.length)
       : Math.min(1, elapsed / SPOKEN_SECONDS);
 
+  // While dragging, the bar follows the pointer rather than the narration.
+  const shown = scrub ?? progress;
+
+  function commitScrub() {
+    if (scrub === null) return;
+    seek(scrub);
+    setScrub(null);
+  }
+
   function onButton() {
     if (playing) {
       silenced.current = true; // Autoplay must not restart it behind them.
@@ -260,24 +311,26 @@ export function VoiceIntro({ recordedSrc = null }: { recordedSrc?: string | null
         <span className="text-sm text-bone">Intro</span>
 
         <span className="ml-auto font-mono text-xs tabular-nums text-muted">
-          {clock(elapsed)}
+          {clock(shown * total)}
           <span className="text-muted/50"> / {clock(total)}</span>
         </span>
       </div>
 
-      <div
-        className="mt-2.5 h-1 w-full overflow-hidden rounded-full bg-line"
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.round(progress * 100)}
-        aria-label="Introduction progress"
-      >
-        <div
-          className="h-full rounded-full bg-accent transition-[width] duration-500 ease-linear"
-          style={{ width: `${progress * 100}%` }}
-        />
-      </div>
+      <input
+        type="range"
+        min={0}
+        max={1000}
+        step={1}
+        value={Math.round(shown * 1000)}
+        onChange={(event) => setScrub(Number(event.target.value) / 1000)}
+        onPointerUp={commitScrub}
+        onKeyUp={commitScrub}
+        onBlur={commitScrub}
+        aria-label="Seek through the introduction"
+        aria-valuetext={`${clock(shown * total)} of ${clock(total)}`}
+        className="scrub mt-1.5"
+        style={{ "--played": `${shown * 100}%` } as CSSProperties}
+      />
 
       {state === "unsupported" ? (
         <p className="mt-2 text-xs text-muted">

@@ -119,6 +119,14 @@ Progress comes from the utterance's real word-boundary events, falling back to
 the elapsed clock where a browser does not send them, and the total is estimated
 from the word count at 165 words a minute.
 
+The bar is a real scrubber: click or drag it to jump. A recording is seeked
+outright; synthesised speech cannot be, so the equivalent **character** offset is
+spoken from instead, which tracks closely because the rate barely varies. Seeking
+while paused moves the position without breaking the silence; from a standstill it
+starts playing at that point. It is a styled `input[type=range]` rather than a div
+with click maths, so dragging, keyboard arrows and the slider semantics come for
+free — the `.scrub` rules in `globals.css` take `--played` from the component.
+
 Pause holds its position. It does **not** use `speechSynthesis.pause()`, which is
 quietly ignored for the network-backed voices this prefers — the narration simply
 carries on. Instead the last word boundary is remembered and a resume speaks the
