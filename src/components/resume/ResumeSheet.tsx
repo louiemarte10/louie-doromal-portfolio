@@ -1,7 +1,12 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import { plainUrl, type ResumeContent } from "@/lib/resume-content";
-import { defaultTemplate, type Template } from "@/lib/resume-templates";
+import {
+  defaultSurface,
+  defaultTemplate,
+  type SurfaceId,
+  type Template,
+} from "@/lib/resume-templates";
 
 function hasText(...values: string[]) {
   return values.some((value) => value.trim().length > 0);
@@ -41,9 +46,11 @@ function Points({ items, t }: { items: string[]; t: Template }) {
 export function ResumeSheet({
   content,
   template = defaultTemplate,
+  surface = defaultSurface.id,
 }: {
   content: ResumeContent;
   template?: Template;
+  surface?: SurfaceId;
 }) {
   const t = template;
 
@@ -314,6 +321,7 @@ export function ResumeSheet({
 
   return (
     <article
+      data-surface={surface}
       className={`resume-sheet mx-auto rounded-sm bg-paper text-paper-ink shadow-2xl shadow-black/40 ${t.font}`}
     >
       {header}

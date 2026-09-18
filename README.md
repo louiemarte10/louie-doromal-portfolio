@@ -60,6 +60,13 @@ Both pages render `src/components/resume/ResumeSheet.tsx`, which takes a
 `ResumeContent` (see `src/lib/resume-content.ts`) and a `Template`;
 `ownerContent` maps `src/data/resume.ts` onto that shape.
 
+The builder also offers a light or dark **background**. That is applied as
+`data-surface` on the sheet, which redefines the `--color-paper-*` variables in
+`globals.css` — which is why those tokens sit in a plain `@theme` block rather
+than `@theme inline`: `inline` bakes the literal value into every utility, so
+`bg-paper` could no longer be reassigned per element. Dark prints as dark, so it
+suits a PDF read on screen more than one going to an office printer.
+
 `src/lib/resume-templates.ts` holds the five templates the builder offers
 (Editorial, Classic, Sidebar, Compact, Banner). A template is class names plus
 two structural choices — `layout` (single column or left rail) and `header`
@@ -90,6 +97,19 @@ That builds the site, serves it locally, prints `/resume` with headless Chrome o
 Edge, and writes the PDF back into `public/`. Set `CHROME_PATH` if neither browser
 is found. The **Print** button on the page always reflects current data, even when
 the committed PDF is behind.
+
+## Spoken introduction
+
+The **Hear my intro** button in the hero narrates `src/lib/voice-intro.ts` through
+the browser's own Web Speech API — free, no key, and nothing leaves the machine.
+The script is kept apart from the on-page copy because it is written for the ear:
+no dashes or abbreviations a synthesiser would spell out.
+
+It cannot start by itself. Browsers only allow audio after a real click, and
+unannounced speech would be hostile anyway, so it is a button rather than an
+autoplay. The voice comes from whatever the operating system has installed, so it
+sounds different across machines; the component prefers a voice whose name looks
+like a natural or Google one before falling back to any English voice.
 
 ## Local development
 

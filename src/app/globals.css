@@ -10,15 +10,30 @@
   --color-accent: #d8a657;
   --color-accent-soft: #f0d9a8;
 
-  /* Resume sheet reads as paper, on screen and on paper alike. */
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-mono-code);
+}
+
+/**
+ * The resume sheet's own palette. Deliberately not `inline`: the utilities have
+ * to stay var() references so a sheet can be switched to a dark surface just by
+ * redefining these on the element.
+ */
+@theme {
   --color-paper: #ffffff;
   --color-paper-ink: #16191f;
   --color-paper-soft: #4c5663;
   --color-paper-rule: #d9dde4;
   --color-paper-accent: #8a6412;
+}
 
-  --font-sans: var(--font-inter);
-  --font-mono: var(--font-mono-code);
+.resume-sheet[data-surface="dark"] {
+  --color-paper: #0f1218;
+  --color-paper-ink: #e9eaee;
+  --color-paper-soft: #98a1b0;
+  --color-paper-rule: #262b35;
+  /* The light site gold, which needs no darkening against a dark sheet. */
+  --color-paper-accent: #d8a657;
 }
 
 html {

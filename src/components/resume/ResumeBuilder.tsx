@@ -11,14 +11,19 @@ import {
   type ResumeContent,
 } from "@/lib/resume-content";
 import {
+  defaultSurface,
   defaultTemplate,
+  surfaceById,
+  surfaces,
   templateById,
   templates,
+  type SurfaceId,
   type TemplateId,
 } from "@/lib/resume-templates";
 
 const STORAGE_KEY = "resume-builder-v1";
 const TEMPLATE_KEY = "resume-builder-template-v1";
+const SURFACE_KEY = "resume-builder-surface-v1";
 
 /** Only ever a convenience: the draft is per-browser and never leaves it. */
 function loadDraft(): ResumeContent | null {
@@ -51,6 +56,22 @@ function loadTemplateId(): TemplateId {
 function saveTemplateId(id: TemplateId) {
   try {
     window.localStorage.setItem(TEMPLATE_KEY, id);
+  } catch {
+    // Storage blocked; the choice still applies for this session.
+  }
+}
+
+function loadSurfaceId(): SurfaceId {
+  try {
+    return surfaceById(window.localStorage.getItem(SURFACE_KEY)).id;
+  } catch {
+    return defaultSurface.id;
+  }
+}
+
+function saveSurfaceId(id: SurfaceId) {
+  try {
+    window.localStorage.setItem(SURFACE_KEY, id);
   } catch {
     // Storage blocked; the choice still applies for this session.
   }
@@ -143,6 +164,7 @@ export function ResumeBuilder() {
     () => loadDraft() ?? blankContent,
   );
   const [templateId, setTemplateId] = useState<TemplateId>(loadTemplateId);
+  const [surfaceId, setSurfaceId] = useState<SurfaceId>(loadSurfaceId);
   const template = templateById(templateId);
 
   useEffect(() => {
@@ -152,6 +174,10 @@ export function ResumeBuilder() {
   useEffect(() => {
     saveTemplateId(templateId);
   }, [templateId]);
+
+  useEffect(() => {
+    saveSurfaceId(surfaceId);
+  }, [surfaceId]);
 
   function patch(changes: Partial<ResumeContent>) {
     setContent((current) => ({ ...current, ...changes }));
@@ -249,6 +275,39 @@ export function ResumeBuilder() {
                       aria-pressed={active}
                       onClick={() => setTemplateId(option.id)}
                       className={`block w-full rounded-lg border px-3 py-2 text-left transition-colors ${
+                        active
+                          ? "border-accent bg-ink-3"
+                          : "border-line/70 bg-ink-2 hover:border-line"
+                      }`}
+                    >
+                      <span
+                        className={`block text-sm ${active ? "text-accent" : "text-bone"}`}
+                      >
+                        {option.label}
+                      </span>
+                      <span className="mt-0.5 block text-[11px] leading-snug text-muted">
+                        {option.note}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section>
+              <h2 className="mb-3 font-mono text-[11px] uppercase tracking-[0.2em] text-accent">
+                Background
+              </h2>
+              <div className="grid grid-cols-2 gap-1.5">
+                {surfaces.map((option) => {
+                  const active = option.id === surfaceId;
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => setSurfaceId(option.id)}
+                      className={`rounded-lg border px-3 py-2 text-left transition-colors ${
                         active
                           ? "border-accent bg-ink-3"
                           : "border-line/70 bg-ink-2 hover:border-line"
@@ -533,7 +592,7 @@ export function ResumeBuilder() {
           </form>
 
           <div className="min-w-0 overflow-x-auto print:overflow-visible">
-            <ResumeSheet content={content} template={template} />
+            <ResumeSheet content={content} template={template} surface={surfaceId} />
           </div>
         </div>
       </div>

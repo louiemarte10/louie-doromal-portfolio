@@ -123,3 +123,27 @@ export const defaultTemplate = templates[0];
 export function templateById(id: string | null | undefined): Template {
   return templates.find((template) => template.id === id) ?? defaultTemplate;
 }
+
+export type SurfaceId = "light" | "dark";
+
+export type Surface = {
+  id: SurfaceId;
+  label: string;
+  note: string;
+};
+
+/**
+ * Applied as `data-surface` on the sheet, which redefines the paper colour
+ * variables in globals.css. Dark prints as dark, so it suits a PDF that will be
+ * read on screen more than one going through an office printer.
+ */
+export const surfaces: Surface[] = [
+  { id: "light", label: "Light", note: "White paper. Prints cleanly." },
+  { id: "dark", label: "Dark", note: "Dark paper. Best for a PDF read on screen." },
+];
+
+export const defaultSurface = surfaces[0];
+
+export function surfaceById(id: string | null | undefined): Surface {
+  return surfaces.find((surface) => surface.id === id) ?? defaultSurface;
+}

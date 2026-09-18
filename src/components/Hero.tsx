@@ -1,4 +1,5 @@
 import { EmailLink } from "@/components/EmailLink";
+import { VoiceIntro } from "@/components/VoiceIntro";
 import { profile, stats } from "@/data/resume";
 
 export function Hero() {
@@ -24,7 +25,11 @@ export function Hero() {
             {profile.tagline}
           </p>
 
-          <div className="mt-10 flex flex-wrap items-center gap-3">
+          <div className="mt-7">
+            <VoiceIntro />
+          </div>
+
+          <div className="mt-8 flex flex-wrap items-center gap-3">
             <a
               href="#work"
               className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-ink transition-opacity hover:opacity-85"
