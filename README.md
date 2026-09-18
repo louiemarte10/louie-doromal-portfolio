@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# louie-doromal-portfolio
 
-## Getting Started
+Personal portfolio site for **Louie M. Doromal** — AI Software Engineer, Iloilo City.
 
-First, run the development server:
+**Live:** https://louie-d-portfolio.vercel.app
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Stack
+
+- **Next.js 16** (App Router, Turbopack)
+- **TypeScript**
+- **Tailwind CSS v4**
+- Deployed on **Vercel**
+
+## Structure
+
+```
+src/
+├── app/
+│   ├── layout.tsx      # Fonts, metadata, OpenGraph
+│   ├── page.tsx        # Section composition + JSON-LD Person schema
+│   ├── globals.css     # Theme tokens, dark ground, motion
+│   └── icon.svg        # LD monogram favicon
+├── components/
+│   ├── Nav.tsx         # Sticky header
+│   ├── Hero.tsx        # Name, role, stat strip
+│   ├── About.tsx       # Summary + skill groups
+│   ├── Experience.tsx  # Role timeline
+│   ├── Projects.tsx    # Selected work
+│   ├── RecentWork.tsx  # Live GitHub activity (server component)
+│   ├── Background.tsx  # Education + awards
+│   ├── Contact.tsx     # Contact grid + footer
+│   └── Section.tsx     # Shared section shell
+└── data/
+    └── resume.ts       # All page content in one typed module
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Every piece of copy lives in `src/data/resume.ts` — edit that file to update the site; no component changes needed.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Live GitHub activity
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The **Recent activity** section is a server component that calls the GitHub public API at render time, filters out forks and archived repos, and shows the six most recently pushed. It revalidates hourly (`next: { revalidate: 3600 }`) and falls back to a static snapshot in `repoFallback` if the API is unreachable, so a GitHub outage can never fail a build.
 
-## Learn More
+## Local development
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm install
+npm run dev     # http://localhost:3000
+npm run build   # production build
+npm run lint
+```
