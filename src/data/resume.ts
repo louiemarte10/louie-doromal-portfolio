@@ -216,6 +216,18 @@ export const projects: Project[] = [
     featured: true,
   },
   {
+    name: "The Eternals",
+    context: "Personal · the-eternals",
+    blurb:
+      "Autonomous intelligences engineered to outlast the session, the project and the person — The Silicon Lineage.",
+    points: [
+      "Vue front end deployed on Vercel, released under the MIT license.",
+    ],
+    stack: ["Vue", "Vercel"],
+    href: "https://github.com/louiemarte10/the-eternals",
+    live: "https://eternal-vigil-ai.vercel.app",
+  },
+  {
     name: "AI-Powered Job Search System",
     context: "Personal project",
     blurb:

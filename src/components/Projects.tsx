@@ -116,7 +116,7 @@ export function Projects() {
       id="work"
       index="03"
       title="Selected work"
-      lead="Systems I built and still maintain — at work and on my own time."
+      lead="Systems I built."
     >
       <div className="grid gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
         {featured.map((project) => (
@@ -124,7 +124,7 @@ export function Projects() {
         ))}
       </div>
 
-      <div className="mt-10 grid gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-3">
+      <div className="mt-10 grid gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
         {rest.map((project) => (
           <ProjectCard key={project.name} project={project} />
         ))}
