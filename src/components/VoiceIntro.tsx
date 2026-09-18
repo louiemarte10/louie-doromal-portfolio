@@ -4,19 +4,26 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { pickVoice } from "@/lib/pick-voice";
 import { voiceIntro, voiceIntroWords } from "@/lib/voice-intro";
 
-type State = "idle" | "speaking" | "unsupported";
+type State = "idle" | "playing" | "paused" | "unsupported";
 
 /** Once per tab, so coming back from /resume does not restart the narration. */
 const PLAYED_KEY = "voice-intro-played";
 
-/** Brisk enough not to drag, slow enough to stay clear. */
-const RATE = 1.12;
+/** A shade above natural pace: brisk without running away from the listener. */
+const RATE = 1.05;
 /** Synthesised speech lands near 165 words a minute before the rate is applied. */
 const SPOKEN_SECONDS = Math.round((voiceIntroWords / (165 * RATE)) * 60);
 
 function clock(seconds: number) {
   const whole = Math.max(0, Math.round(seconds));
   return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
+}
+
+/** Keeps an estimated resume point from starting mid-word. */
+function snapToWord(index: number) {
+  if (index <= 0) return 0;
+  const next = voiceIntro.indexOf(" ", index);
+  return next === -1 ? index : next + 1;
 }
 
 function remember() {
@@ -31,26 +38,73 @@ export function VoiceIntro({ recordedSrc = null }: { recordedSrc?: string | null
   const [state, setState] = useState<State>("idle");
   const [elapsed, setElapsed] = useState(0);
   const [total, setTotal] = useState(recordedSrc ? 0 : SPOKEN_SECONDS);
-  /** From real word-boundary events, where the browser sends them. */
+  /** Absolute position in the script, from real word-boundary events. */
   const [spokenChars, setSpokenChars] = useState(0);
 
   const audio = useRef<HTMLAudioElement | null>(null);
   // Chrome can garbage-collect a speaking utterance and cut it off mid-sentence;
   // holding the reference keeps it alive until it finishes.
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  /** Where a resume should pick the script back up. */
+  const resumeChar = useRef(0);
   const started = useRef(false);
   const silenced = useRef(false);
 
-  const play = useCallback(() => {
+  /**
+   * Speaks from a character offset rather than calling resume(), because
+   * speechSynthesis.pause() is unreliable for the network-backed voices this
+   * picks first — it is quietly ignored, and the narration keeps going. Starting
+   * a fresh utterance at the last word boundary resumes properly everywhere.
+   */
+  const speakFrom = useCallback((fromChar: number) => {
+    const synth = window.speechSynthesis;
+
+    // Detach the old utterance before cancelling, so its onend cannot land on
+    // the new state.
+    const previous = utteranceRef.current;
+    if (previous) {
+      previous.onend = null;
+      previous.onerror = null;
+      previous.onboundary = null;
+      previous.onstart = null;
+    }
+    synth.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(voiceIntro.slice(fromChar));
+    const voice = pickVoice(synth.getVoices());
+    if (voice) utterance.voice = voice;
+    utterance.rate = RATE;
+    // Pitch left alone: bending an already male voice is one of the things that
+    // makes a synthesiser sound like one.
+    utterance.onstart = () => {
+      started.current = true;
+      remember();
+      setState("playing");
+    };
+    utterance.onboundary = (event) => setSpokenChars(fromChar + event.charIndex);
+    utterance.onend = () => {
+      resumeChar.current = 0;
+      setState("idle");
+      setElapsed(0);
+      setSpokenChars(0);
+    };
+    utterance.onerror = () => setState("idle");
+
+    utteranceRef.current = utterance;
+    setState("playing");
+    synth.speak(utterance);
+  }, []);
+
+  const start = useCallback(() => {
+    resumeChar.current = 0;
     setElapsed(0);
     setSpokenChars(0);
 
-    // A recording is always preferred: it is a real voice, at a real pace.
     if (recordedSrc) {
       const element = audio.current;
       if (!element) return;
       element.currentTime = 0;
-      setState("speaking");
+      setState("playing");
       element.play().then(
         () => {
           started.current = true;
@@ -65,55 +119,53 @@ export function VoiceIntro({ recordedSrc = null }: { recordedSrc?: string | null
       setState("unsupported");
       return;
     }
+    speakFrom(0);
+  }, [recordedSrc, speakFrom]);
 
-    const synth = window.speechSynthesis;
-    synth.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(voiceIntro);
-    const voice = pickVoice(synth.getVoices());
-    if (voice) utterance.voice = voice;
-    utterance.rate = RATE;
-    // Left alone: shifting the pitch of an already male voice is one of the
-    // things that makes a synthesiser sound like one.
-    utterance.onstart = () => {
-      started.current = true;
-      remember();
-      setState("speaking");
-    };
-    utterance.onboundary = (event) => setSpokenChars(event.charIndex);
-    utterance.onend = () => {
-      setState("idle");
-      setSpokenChars(0);
-    };
-    utterance.onerror = () => setState("idle");
-
-    utteranceRef.current = utterance;
-    setState("speaking");
-    synth.speak(utterance);
-  }, [recordedSrc]);
-
-  const stop = useCallback(() => {
-    silenced.current = true; // A later click must not start it again.
+  /** Holds position: the clock and the bar stay where the listener stopped. */
+  const pause = useCallback(() => {
     if (recordedSrc) {
       audio.current?.pause();
-      if (audio.current) audio.current.currentTime = 0;
-    } else if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
+      setState("paused");
+      return;
     }
-    setState("idle");
-    setElapsed(0);
-    setSpokenChars(0);
-  }, [recordedSrc]);
 
-  const speaking = state === "speaking";
+    // Safari sends no boundary events, so fall back to where the clock says we
+    // are rather than restarting the narration from the top.
+    resumeChar.current =
+      spokenChars > 0
+        ? spokenChars
+        : snapToWord(Math.floor((elapsed / SPOKEN_SECONDS) * voiceIntro.length));
 
-  // A recording reports its own position, so this is only for synthesised
+    const current = utteranceRef.current;
+    if (current) {
+      current.onend = null;
+      current.onerror = null;
+      current.onboundary = null;
+    }
+    window.speechSynthesis.cancel();
+    setState("paused");
+  }, [recordedSrc, spokenChars, elapsed]);
+
+  const resume = useCallback(() => {
+    if (recordedSrc) {
+      setState("playing");
+      audio.current?.play().catch(() => setState("paused"));
+      return;
+    }
+    speakFrom(resumeChar.current);
+  }, [recordedSrc, speakFrom]);
+
+  const playing = state === "playing";
+  const paused = state === "paused";
+
+  // A recording reports its own position, so this only drives synthesised
   // speech. The callback keeps setState out of the effect body.
   useEffect(() => {
-    if (!speaking || recordedSrc) return;
+    if (!playing || recordedSrc) return;
     const id = window.setInterval(() => setElapsed((value) => value + 1), 1000);
     return () => window.clearInterval(id);
-  }, [speaking, recordedSrc]);
+  }, [playing, recordedSrc]);
 
   useEffect(() => {
     if (!recordedSrc && !("speechSynthesis" in window)) return;
@@ -134,7 +186,7 @@ export function VoiceIntro({ recordedSrc = null }: { recordedSrc?: string | null
      */
     const attempt = () => {
       if (started.current || silenced.current) return;
-      play();
+      start();
     };
 
     const timer = window.setTimeout(attempt, 600);
@@ -147,7 +199,7 @@ export function VoiceIntro({ recordedSrc = null }: { recordedSrc?: string | null
       window.removeEventListener("keydown", attempt);
       if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     };
-  }, [play, recordedSrc]);
+  }, [start, recordedSrc]);
 
   // Word boundaries are exact but not every browser sends them, so the clock
   // stands in when they are missing.
@@ -159,8 +211,19 @@ export function VoiceIntro({ recordedSrc = null }: { recordedSrc?: string | null
       ? Math.min(1, spokenChars / voiceIntro.length)
       : Math.min(1, elapsed / SPOKEN_SECONDS);
 
+  function onButton() {
+    if (playing) {
+      silenced.current = true; // Autoplay must not restart it behind them.
+      pause();
+    } else if (paused) {
+      resume();
+    } else {
+      start();
+    }
+  }
+
   return (
-    <div>
+    <div className="w-full max-w-xs">
       {recordedSrc ? (
         <audio
           ref={audio}
@@ -175,34 +238,35 @@ export function VoiceIntro({ recordedSrc = null }: { recordedSrc?: string | null
         />
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+      <div className="flex items-center gap-3">
         <button
           type="button"
-          onClick={speaking ? stop : play}
-          aria-pressed={speaking}
-          className="inline-flex items-center gap-2 rounded-full border border-line px-4 py-2 text-sm text-bone transition-colors hover:border-accent hover:text-accent"
+          onClick={onButton}
+          aria-label={playing ? "Pause the introduction" : "Play the introduction"}
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-line text-bone transition-colors hover:border-accent hover:text-accent"
         >
           <svg viewBox="0 0 24 24" aria-hidden className="h-3.5 w-3.5 fill-current">
-            {speaking ? (
-              <rect x="6" y="6" width="12" height="12" rx="1.5" />
+            {playing ? (
+              <>
+                <rect x="7" y="5" width="3.5" height="14" rx="1" />
+                <rect x="13.5" y="5" width="3.5" height="14" rx="1" />
+              </>
             ) : (
               <path d="M8 5v14l11-7z" />
             )}
           </svg>
-          {speaking ? "Stop the intro" : "Hear my intro"}
         </button>
 
-        <p
-          className="font-mono text-xs tabular-nums text-muted"
-          aria-label={`${clock(elapsed)} of ${clock(total)}`}
-        >
-          {clock(speaking ? elapsed : 0)}
+        <span className="text-sm text-bone">Intro</span>
+
+        <span className="ml-auto font-mono text-xs tabular-nums text-muted">
+          {clock(elapsed)}
           <span className="text-muted/50"> / {clock(total)}</span>
-        </p>
+        </span>
       </div>
 
       <div
-        className="mt-3 h-0.5 w-full max-w-xs overflow-hidden rounded-full bg-line"
+        className="mt-2.5 h-1 w-full overflow-hidden rounded-full bg-line"
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={100}
